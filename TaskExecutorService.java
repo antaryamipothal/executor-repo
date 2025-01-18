@@ -11,18 +11,18 @@ import java.util.concurrent.TimeUnit;
 
 import com.interview.opentext.Main.Task;
 
-public class TaskExecutorService implements Main.TaskExecutor {
+public class TaskExecutorService implements Main.TaskExecutor{ 
 
-	private final LinkedBlockingQueue<TaskWrapper<?>> taskQueue = new LinkedBlockingQueue<>();
+	private final LinkedBlockingQueue<TaskCombinedWrapper<?>> taskQueue = new LinkedBlockingQueue<>();
 	private final ConcurrentHashMap<UUID, Boolean> activeTaskGroups = new ConcurrentHashMap<>();
 	private final ExecutorService executor;
-	private final int maxConcurrency;
+	private final int maxNoConcurrency;
 	private volatile boolean isShutdown = false;
 
-	public TaskExecutorService(int maxConcurrency) {
-		this.maxConcurrency = maxConcurrency;
-		this.executor = Executors.newFixedThreadPool(maxConcurrency);
-		startTaskProcessing();
+	public TaskExecutorService(int maxNoConcurrency) {
+		this.maxNoConcurrency = maxNoConcurrency;
+		this.executor = Executors.newFixedThreadPool(maxNoConcurrency);
+		startTaskExecution();
 	}
 
 	@Override
@@ -32,16 +32,16 @@ public class TaskExecutorService implements Main.TaskExecutor {
 		}
 
 		FutureTask<T> futureTask = new FutureTask<>(task.taskAction());
-		TaskWrapper<T> taskWrapper = new TaskWrapper<>(task, futureTask);
+		TaskCombinedWrapper<T> taskWrapper = new TaskCombinedWrapper<>(task, futureTask);
 		taskQueue.offer(taskWrapper);
 		return futureTask;
 	}
 
-	private void startTaskProcessing() {
+	private void startTaskExecution() {
 		new Thread(() -> {
 			while (true) {
 				try {
-					TaskWrapper<?> taskWrapper = taskQueue.take();
+					TaskCombinedWrapper<?> taskWrapper = taskQueue.take();
 					UUID groupId = taskWrapper.task.taskGroup().groupUUID();
 
 					synchronized (activeTaskGroups) {
@@ -69,18 +69,18 @@ public class TaskExecutorService implements Main.TaskExecutor {
 		}).start();
 	}
 
-	private static class TaskWrapper<T> {
+	private static class TaskCombinedWrapper<T> {
 		final Main.Task<T> task;
 		final FutureTask<T> futureTask;
 
-		TaskWrapper(Main.Task<T> task, FutureTask<T> futureTask) {
+		TaskCombinedWrapper(Main.Task<T> task, FutureTask<T> futureTask) {
 			this.task = task;
 			this.futureTask = futureTask;
 		}
 	}
 	
 
-	public void shutdown() {
+	public void shutDownExecutor() {
 		
         isShutdown = true;
 
