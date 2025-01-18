@@ -50,7 +50,7 @@ public class TestMultiTaskExecutor {
         System.out.println(future3.get());
 
         // Shutdown the executor
-        executorService.shutdown();
+        executorService.shutDownExecutor();
     }
 
 }
