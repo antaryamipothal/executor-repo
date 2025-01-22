@@ -17,7 +17,6 @@ public class TaskExecutorService implements Main.TaskExecutor{
 	private final ConcurrentHashMap<UUID, Boolean> activeTaskGroups = new ConcurrentHashMap<>();
 	private final ExecutorService executor;
 	private final int maxNoConcurrency;
-	private volatile boolean isShutdown = false;
 
 	public TaskExecutorService(int maxNoConcurrency) {
 		this.maxNoConcurrency = maxNoConcurrency;
@@ -82,8 +81,6 @@ public class TaskExecutorService implements Main.TaskExecutor{
 
 	public void shutDownExecutor() {
 		
-        isShutdown = true;
-
         executor.shutdown();
 
         try {
